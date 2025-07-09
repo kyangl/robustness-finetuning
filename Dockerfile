@@ -12,5 +12,9 @@ RUN pip install --upgrade pip \
     adapters \
     evaluate \
     scikit-learn \
-    argparse \
-    wandb
+    argparse 
+
+# set the working directory in the container
+WORKDIR /workspace
+
+COPY . /workspace 

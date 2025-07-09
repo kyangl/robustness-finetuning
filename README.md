@@ -30,20 +30,19 @@ We find that:
   average). 
   
 
-## 📁 Project Structure (dummy)
+## 📁 Project Structure
 <pre>
 robustness-finetuning/ 
-├── scripts/ # Training and evaluation scripts
-│   ├── build.py # Modify model architecture based on different fine-tuning strategies 
-│   ├── finetune.py # Fine-tune the pre-trained model with continuous evaluation (attacks)
+├── configs/ # YAML configs for parameter-efficient fine-tuning strategies
+├── scripts/ # Scripts for training and evaluation
 │   ├── attack.py # Attack algorithms
-│   ├── utils.py # Utilities with logging 
-│   └── main.py # Continuous robustness evaluation during fine-tuning
-├── configs/ # YAML configs for parameter-efficient fine-tuning strategies 
-├── config_gen.py # Generate customized configs for fine-tuning strategies 
+│   ├── build.py # Update model architecture based on different fine-tuning strategies 
+│   ├── config_gen.py # Generate customized configs for fine-tuning strategies 
+│   ├── finetune.py # Finetune the pre-trained model with continuous evaluation (attacks)
+│   ├── main.py # Continuous robustness evaluation during fine-tuning
+│   └── utils.py # Utility functions
 ├── Dockerfile # Requirements and dependencies
-├── README.md 
-└── LICENSE 
+└── README.md 
 
 </pre>
 
@@ -53,15 +52,15 @@ robustness-finetuning/
 ### 1. Environment Setup
 First, clone the repository:
 ```
-git clone <link>
-cd <folder>
+git clone git@github.com:kyangl/robustness-finetuning.git
+cd robustness-finetuning
 ```
 
 We use Docker to manage dependencies and ensure reproducibility. Now, you can build
 and run the container as follows: 
 ```
 # Build the Docker image 
-docker build robustness-finetuning . 
+docker build -t robustness-finetuning . 
 
 # Run the container with GPU support 
 docker run --gpus all -it robustness-finetuning
@@ -77,7 +76,7 @@ through a two-stage process: **build** and **train + attack**. This process is i
 in `main.py`. Here is an example for fine-tuning the pre-trained model with LoRA
 on CIFAR10. 
 ```
-python3 main_self.py --config config0_lora --dataset cifar10 --epoch 20 --learning_rate 5e-4 --weight_decay 1e-2
+python scripts/main.py --config config0_lora --dataset cifar10 --epoch 20 --learning_rate 5e-4 --weight_decay 1e-2
 ```
 The evaluation result will be saved to a json file. 
 

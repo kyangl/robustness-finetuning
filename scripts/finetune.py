@@ -3,7 +3,6 @@ import numpy as np
 import os
 
 from transformers.trainer_callback import TrainerControl, TrainerState
-import wandb
 import json
 
 from adapters import AdapterTrainer
@@ -15,6 +14,7 @@ from attack import PGD, BIM, APGD, CW
 from torch.utils.data import DataLoader, Dataset
 
 from typing import Dict
+from utils import convert_numpy_to_python
 
 
 # Define the collate function at module level
@@ -217,7 +217,7 @@ class AccuracyLoggingCallback(TrainerCallback):
                     batched_pgd_loss += self.pgd_attack.get_track_loss()
 
         if self.log_pgd_loss:
-            print(f"Averaged pgd loss per batch: {self.batched_pgd_loss / num_batches}")
+            print(f"Averaged pgd loss per batch: {batched_pgd_loss / num_batches}")
 
         return {
             "test_clean_acc": clean_acc / total_images,
@@ -237,6 +237,8 @@ class AccuracyLoggingCallback(TrainerCallback):
         # append the new metrics
         data.append(metrics)
 
+        # convert numpy arrays to python lists for json serialization
+        data = convert_numpy_to_python(data)
         # save the data back to the file
         with open(file_path, "w") as f:
             json.dump(data, f)
@@ -291,7 +293,8 @@ class AccuracyLoggingCallback(TrainerCallback):
                 res.update(test_clean_adv_acc)
         return res
 
-    # Determine when to log the metrics during training
+    # Dynamic tracking: determine when to log the metrics during training
+    # This can be adjusted based on different configs
     def should_log(self, step):
         if step <= 100:
             return step % 50 == 0
@@ -451,7 +454,7 @@ def create_efficient_dataloaders(
             shuffle=True,
             collate_fn=collate_fn,
             pin_memory=True,
-            num_workers=2,
+            # num_workers=2,
             prefetch_factor=2,
         ),
         "test_clean": DataLoader(
@@ -460,7 +463,7 @@ def create_efficient_dataloaders(
             shuffle=False,
             collate_fn=collate_fn,
             pin_memory=True,
-            num_workers=2,
+            # num_workers=2,
         ),
         "test_ood": DataLoader(
             test_ood_ds,
@@ -536,7 +539,7 @@ def train_model(
             label_names=["labels"],
             save_strategy="epoch",
             save_total_limit=1,  # save the last 3 checkpoints only
-            evaluation_strategy="epoch",
+            eval_strategy="epoch",
             learning_rate=learning_rate,
             per_device_train_batch_size=batch_size,
             per_device_eval_batch_size=batch_size,
@@ -546,9 +549,8 @@ def train_model(
             metric_for_best_model="accuracy",
             logging_dir="logs",
             remove_unused_columns=False,
-            report_to="none",  # disable wandb for colab
             # fp16=True,  # only on GPUs
-            dataloader_num_workers=2,
+            # dataloader_num_workers=2,
             dataloader_pin_memory=True,
         )
     else:
@@ -556,7 +558,7 @@ def train_model(
             output_dir=checkpoint_path,
             label_names=["labels"],
             remove_unused_columns=False,
-            evaluation_strategy="epoch",
+            eval_strategy="epoch",
             save_total_limit=1,
             save_strategy="epoch",
             learning_rate=learning_rate,
@@ -570,11 +572,10 @@ def train_model(
             load_best_model_at_end=True,
             metric_for_best_model="accuracy",
             # output_dir="./training_output",
-            report_to="none",  # disable wandb for colab
             # use_cpu=True,  # for local testing
             lr_scheduler_type="cosine",
             warmup_steps=800,
-            dataloader_num_workers=2,
+            # dataloader_num_workers=2,
             dataloader_pin_memory=True,
         )
 
@@ -638,16 +639,6 @@ def train_model(
                 )
             ],
         )
-
-    # Log the number of trainable parameters
-    wandb.log(
-        {
-            "Trainable Parameters": sum(
-                p.numel() for p in model.parameters() if p.requires_grad
-            )
-        }
-    )
-    wandb.log({"Total Parameters": sum(p.numel() for p in model.parameters())})
 
     # Train the model (get validation accuracy)
     last_checkpoint = get_last_checkpoint(checkpoint_path)

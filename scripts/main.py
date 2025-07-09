@@ -1,6 +1,5 @@
 import argparse
 import yaml
-import wandb
 import os
 from datasets import load_dataset
 from huggingface_hub import login
@@ -146,12 +145,6 @@ def get_args(parser):
         help="whether apply bn after output layer",
     )
     parser.add_argument(
-        "--job_type",
-        type=str,
-        default=None,
-        help="name of the job type for wandb",
-    )
-    parser.add_argument(
         "--rerun_id",
         type=int,
         default=None,
@@ -213,27 +206,6 @@ def main(args):
         with open("configs/" + args.config + ".yml", "r") as file:
             adapter_config = yaml.load(file, Loader=yaml.FullLoader)
             adapter_config_name = args.config
-
-    wandb_config = {
-        "model": args.model,
-        "adapter_config_name": adapter_config_name,
-        "adapter_config": adapter_config,
-        "dataset": args.dataset,
-        "batch_size": args.batch_size,
-        "attack": args.attack,
-        "alpha": args.alpha,
-        "steps": args.steps,
-        "eps": args.eps,
-        "epoch": args.epoch,
-        "rerun_id": args.rerun_id,
-    }
-
-    wandb.init(
-        name=adapter_config_name,
-        project="ft-robustness",
-        job_type=args.job_type,
-        config=wandb_config,
-    )
 
     # Load the dataset
     if args.dataset == "food101":

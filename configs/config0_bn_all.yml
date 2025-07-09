@@ -1,0 +1,7 @@
+Modules: ['bn']
+
+BnConfig:
+  output_adapter: True
+  mh_adapter: True
+  non_linearity: 'gelu'
+  reduction_factor: 8

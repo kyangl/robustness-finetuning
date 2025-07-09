@@ -1,0 +1,10 @@
+Modules: ['lora']
+
+LoRAConfig:
+  selfattn_lora: True
+  attn_matrices: ['k','v','q']
+  intermediate_lora: True
+  output_lora: True
+  r: 8
+  alpha: 8
+  composition_mode: 'add' # 'add' or 'scale'
